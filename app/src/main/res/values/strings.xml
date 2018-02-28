@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">CAO</string>
 
+    <string name="admin_app_name">CAO Admin</string>
+
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="to">To</string>

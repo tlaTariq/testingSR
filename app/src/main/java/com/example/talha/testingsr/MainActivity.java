@@ -18,13 +18,9 @@ import android.widget.TextView;
 public class MainActivity extends AppCompatActivity {
 
     private final Context mContext = this;
-    private SignalRService mService;
-    private boolean mBound = false;
+    public static SignalRService mService;
+    public static boolean mBound = false;
 
-
-
-    //public EditText etName;
-    //private Button btnGo;
     public static TextView MsgArea;
 
     private String uname;
@@ -33,15 +29,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        //etName = (EditText) findViewById(R.id.area);
-        //etName.setText("talha");
-
-        //btnGo = (Button) findViewById(R.id.btn_go);
-        //btnGo.setOnClickListener(this);
-
-        //ScrollView scroller = new ScrollView(this);
-        //TextView tv=(TextView)findViewById(R.id.textView1);
+        
         MsgArea = (TextView) findViewById(R.id.tv_msgs);
         MsgArea.setMovementMethod(new ScrollingMovementMethod());
 
@@ -62,9 +50,10 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int which) {
                 uname = input.getText().toString();
 
-                Intent intent = new Intent();
+                Intent intent = new Intent(mContext, SignalRService.class);
                 intent.putExtra("name", input.getText().toString());
-                intent.setClass(mContext, SignalRService.class);
+                //intent.setClass(mContext, SignalRService.class);
+                //startService(intent);
                 bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
             }
         });
@@ -79,28 +68,14 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    /*@Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.btn_go:
-
-                Intent intent = new Intent();
-                intent.putExtra("name", etName.getText().toString());
-                intent.setClass(mContext, SignalRService.class);
-                bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-
-                break;
-
-            default:
-                break;
-        }
-    }*/
-
     public void sendMessage(View view) {
+
         if (mBound) {
             // Call a method from the SignalRService.
             // However, if this call were something that might hang, then this request should
             // occur in a separate thread to avoid slowing down the activity performance.
+
+            //User Code
             EditText editText = (EditText) findViewById(R.id.edit_message);
             EditText editText_Receiver = (EditText) findViewById(R.id.edit_receiver);
             if (editText != null && editText.getText().length() > 0) {
@@ -108,7 +83,12 @@ public class MainActivity extends AppCompatActivity {
                 String message = editText.getText().toString();
                 editText.setText("");
                 mService.sendMessage_To(receiver, message);
+
+
             }
+
+            //Admin Code
+            //mService.getConnectedUsers();
         }
     }
     @Override

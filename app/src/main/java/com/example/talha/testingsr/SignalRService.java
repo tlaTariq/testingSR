@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -24,6 +25,7 @@ import microsoft.aspnet.signalr.client.transport.ClientTransport;
 import microsoft.aspnet.signalr.client.transport.ServerSentEventsTransport;
 
 import static com.example.talha.testingsr.MainActivity.MsgArea;
+
 
 public class SignalRService extends Service {
     private HubConnection mHubConnection;
@@ -46,14 +48,20 @@ public class SignalRService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        int result = super.onStartCommand(intent, flags, startId);
+
+        Bundle extras = intent.getExtras();
+        str_name = extras.getString("name");
+
+        //int result = super.onStartCommand(intent, flags, startId);
         startSignalR();
-        return result;
+
+        return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
         mHubConnection.stop();
+
         super.onDestroy();
     }
 
@@ -96,6 +104,11 @@ public class SignalRService extends Service {
         mHubProxy.invoke(SERVER_METHOD_SEND_TO, receiverName, message);
     }
 
+    public void getConnectedUsers() {
+        String GET_CONNECTED_USERS = "GetConnectedUsers";
+        mHubProxy.invoke(GET_CONNECTED_USERS);
+    }
+
     private void startSignalR() {
         Platform.loadPlatformComponent(new AndroidPlatformComponent());
 
@@ -124,6 +137,51 @@ public class SignalRService extends Service {
 
         //sendMessage("Hello from BNK!");
 
+        //Admin Code(Code For Admin)
+
+        String CLIENT_METHOD_ADMIN_MESSAGE = "adminMessage";
+        mHubProxy.on(CLIENT_METHOD_ADMIN_MESSAGE,
+                new SubscriptionHandler1<CustomMessage>() {
+                    @Override
+                    public void run(final CustomMessage msg) {
+                        final String To = msg.UserName;
+
+                        final String MSgFor = msg.MsgFor;
+
+                        final String finalMsg = "Sender: <" + msg.UserName + ">" + "\n" + "Recipient: <" + msg.MsgFor + ">" + "\n" + msg.Message + "\n" + "\n" + "This message was sent by CAO(Chat Always On) App.";
+
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+
+                                MsgArea.append(finalMsg);
+                                MsgArea.append("\n"); MsgArea.append("\n");
+
+                                try {
+                                    SmsManager smsManager = SmsManager.getDefault();
+                                    smsManager.sendTextMessage(MSgFor, null, finalMsg, null, null);
+                                    Toast.makeText(getApplicationContext(), "Message Sent",
+                                            Toast.LENGTH_LONG).show();
+
+                                    MsgArea.append("SMS has been sent to recipient!!!");
+                                    MsgArea.append("\n"); MsgArea.append("\n");
+                                } catch (Exception ex) {
+                                    Toast.makeText(getApplicationContext(),ex.getMessage().toString(),
+                                            Toast.LENGTH_LONG).show();
+                                    ex.printStackTrace();
+                                }
+
+
+                                //Toast.makeText(getApplicationContext(), "Sent!!!", Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                }
+                , CustomMessage.class);
+
+
+        //Real Flow General Standard Code (Code For User Not Admin)
+
         String CLIENT_METHOD_BROADAST_MESSAGE = "broadcastMessage";
         mHubProxy.on(CLIENT_METHOD_BROADAST_MESSAGE,
                 new SubscriptionHandler1<CustomMessage>() {
@@ -131,6 +189,11 @@ public class SignalRService extends Service {
                     public void run(final CustomMessage msg) {
                         final String finalMsg = msg.UserName + " says " + msg.Message;
                         //final String finalMsg = " says ";
+
+                        //Test data
+                        final String MsgFor = msg.MsgFor;
+                        //Test data
+
                         // display Toast message
                         mHandler.post(new Runnable() {
                             @Override
@@ -138,6 +201,8 @@ public class SignalRService extends Service {
 
                                 MsgArea.append(finalMsg);
                                 MsgArea.append("\n");
+
+
 
                                 Toast.makeText(getApplicationContext(), finalMsg, Toast.LENGTH_LONG).show();
                             }
